@@ -1,0 +1,4 @@
+.idea
+venv/
+credential.json
+db.sqlite3
