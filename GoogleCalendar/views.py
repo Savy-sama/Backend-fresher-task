@@ -78,4 +78,28 @@ class GoogleCalendarRedirectView(View):
         # Here we just redirect to the events view.
         return redirect('http://localhost:8000/rest/v1/calendar/events')
 
+class GoogleCalendarEventsView(View):
+    """
+    Fetch events from Google Calendar.
+    """
+
+    def get(self, request, *args, **kwargs):
+        credentials = Credentials(
+            **request.session['credentials']
+        )
+
+        service = build('calendar', 'v3', credentials=credentials)
+
+        # Min time
+        timeMin = '2022-01-01T00:00:00-07:00'
+
+        # Call the Calendar API
+        events_result = service.events().list(calendarId='primary', timeMin=timeMin,
+                                              maxResults=10, singleEvents=True, orderBy='startTime').execute()
+        events = events_result.get('items', [])
+
+        return JsonResponse({'status': 'success',
+                             'message': 'Events have been fetched.',
+                             'data': events
+                             })
 
