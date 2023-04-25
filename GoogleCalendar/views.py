@@ -45,3 +45,37 @@ class GoogleCalendarInitView(View):
         return redirect(authorization_url)
 
 
+class GoogleCalendarRedirectView(View):
+
+    def get(self, request, *args, **kwargs):
+        # Specify the state when creating the flow in the callback so that it can
+        # verified in the authorization server response.
+        state = request.GET.get('state')
+
+        flow = InstalledAppFlow.from_client_secrets_file('credential.json',
+            scopes=['https://www.googleapis.com/auth/calendar.events'],
+            state=state
+        )
+        flow.redirect_uri = 'http://localhost:8000/rest/v1/calendar/redirect'
+
+        # Use the authorization server's response to fetch the OAuth 2.0 tokens.
+        authorization_response = request.build_absolute_uri()
+        flow.fetch_token(authorization_response=authorization_response)
+
+        # Store the credentials in the session.
+        credentials = flow.credentials
+
+        request.session['credentials'] = {
+            'token': credentials.token,
+            'refresh_token': credentials.refresh_token,
+            'token_uri': credentials.token_uri,
+            'client_id': credentials.client_id,
+            'client_secret': credentials.client_secret,
+            'scopes': credentials.scopes
+        }
+
+        # Fetching of events is done in a separate view.
+        # Here we just redirect to the events view.
+        return redirect('http://localhost:8000/rest/v1/calendar/events')
+
+
